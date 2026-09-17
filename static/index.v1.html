@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIZAN — L'Équilibre de l'Information & Consensus en Temps Réel</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f4f7fb',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#0f172a'
+                        }
+                    },
+                    keyframes: {
+                        pulseBorder: {
+                            '0%, 100%': { borderColor: 'rgba(239, 68, 68, 0.9)', boxShadow: '0 0 15px rgba(239, 68, 68, 0.3)' },
+                            '50%': { borderColor: 'rgba(239, 68, 68, 0.3)', boxShadow: '0 0 0px transparent' }
+                        },
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateY(-15px) scale(0.98)' },
+                            '100%': { opacity: '1', transform: 'translateY(0) scale(1)' }
+                        }
+                    },
+                    animation: {
+                        'pulse-border': 'pulseBorder 2s infinite',
+                        'slide-in': 'slideIn 0.35s ease-out forwards'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .font-editorial { font-family: 'Newsreader', serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+    <link rel="icon" type="image/png" href="/static/logo.png">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased flex flex-col">
+
+    <!-- Top Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand -->
+            <div class="flex items-center gap-3">
+                <img src="/static/logo.png" alt="MIZAN Logo" class="w-10 h-10 rounded-xl object-cover shadow-md shadow-blue-500/10 border border-slate-700/80">
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        MIZAN
+                        <span class="text-xs uppercase px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-semibold border border-blue-500/20">Consensus Stream</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400">L'Équilibre de l'Information & Dépêches Recoupées</p>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex items-center gap-2.5">
+                <!-- Live SSE Status Indicator -->
+                <div id="statusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs font-medium text-slate-300">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" id="statusDot"></span>
+                    <span id="statusText">Connexion...</span>
+                </div>
+
+                <!-- Réseau / Sources Button -->
+                <button onclick="openSourcesModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-purple-500/30 active:scale-95 transition-all text-xs font-semibold text-purple-300 hover:text-purple-200 flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-network-wired text-purple-400"></i>
+                    <span>Réseau (<span id="btnSourcesCount">726</span>)</span>
+                </button>
+
+                <!-- Santé des Sources Button -->
+                <button onclick="openHealthModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-emerald-500/30 active:scale-95 transition-all text-xs font-semibold text-emerald-300 hover:text-emerald-200 flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-heart-pulse text-emerald-400 animate-pulse"></i>
+                    <span>Santé</span>
+                </button>
+
+                <!-- Veille Contenu Button -->
+                <button onclick="openContentModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-red-500/30 active:scale-95 transition-all text-xs font-semibold text-red-300 hover:text-red-200 flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-play text-red-400"></i>
+                    <span>Veille Contenu</span>
+                </button>
+
+
+                <!-- Telegram Button -->
+                <button onclick="openTelegramModal()" class="px-3 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-sky-300 hover:text-white active:scale-95 transition-all text-xs font-semibold flex items-center gap-2 shadow-sm">
+                    <i class="fa-brands fa-telegram text-sky-400 text-sm"></i>
+                    <span>Telegram</span>
+                </button>
+
+                <!-- Criticality Config Button -->
+                <button onclick="openCriticalityModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 active:scale-95 transition-all text-xs font-semibold text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-amber-400"></i>
+                    <span>Seuil</span>
+                </button>
+
+                <!-- Profile Modal Trigger Button -->
+                <button onclick="openProfileModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 active:scale-95 transition-all text-xs font-semibold text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-user-gear text-blue-400"></i>
+                    <span>Profil</span>
+                </button>
+
+                <!-- Télécharger App iOS Direct -->
+                <a href="/download/MyNewsAI.ipa" download title="Télécharger l'application native iOS (IPA)" class="px-3 py-1.5 rounded-lg bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-300 hover:text-emerald-100 font-semibold text-xs flex items-center gap-1.5 active:scale-95 shadow-sm transition-all">
+                    <i class="fa-brands fa-apple text-sm"></i>
+                    <span>App iOS</span>
+                </a>
+
+                <!-- Clear Persistence Button -->
+                <button onclick="clearLocalHistory()" title="Effacer l'historique local" class="p-2 rounded-lg bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-700 transition-colors text-xs">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+
+                <!-- 24h Deep Catch-Up Button -->
+                <button onclick="trigger24hScan()" id="btn24hScan" class="px-3 py-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 hover:text-white font-semibold text-xs flex items-center gap-2 active:scale-95 shadow-sm transition-all">
+                    <i class="fa-solid fa-clock-rotate-left text-cyan-400"></i>
+                    <span>Rattrapage 24h</span>
+                </button>
+
+                <!-- Simulation Trigger Button -->
+                <button onclick="triggerSimulationPulse()" id="btnSimulate" class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:scale-95 transition-all text-xs font-semibold text-white flex items-center gap-2 shadow-md shadow-blue-600/30">
+                    <i class="fa-solid fa-bolt text-amber-300"></i>
+                    <span>Simuler</span>
+                </button>
+
+                <!-- RSS Sync Button -->
+                <button onclick="triggerFeedTick()" id="btnSync" title="Scanner les flux RSS" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition-colors">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Stats & Threshold Summary Bar -->
+    <div class="border-b border-slate-800/60 bg-slate-900/40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-clock-rotate-left text-blue-400 text-sm"></i>
+                <div>
+                    <span class="text-slate-400">Historique Persistant :</span>
+                    <span id="statAlerts" class="font-bold text-white ml-1">0 news</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onclick="openSourcesModal()">
+                <i class="fa-solid fa-network-wired text-purple-400 text-sm"></i>
+                <div>
+                    <span class="text-slate-400">Sources & Réseau :</span>
+                    <span id="statTotalSources" class="font-bold text-purple-400 ml-1">726 flux actifs</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onclick="openCriticalityModal()">
+                <i class="fa-solid fa-gauge-high text-amber-400 text-sm"></i>
+                <div>
+                    <span class="text-slate-400">Seuil de Criticité :</span>
+                    <span id="statCriticality" class="font-bold text-amber-400 ml-1">≥ 3 sources / &lt; 20 min</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onclick="openProfileModal()">
+                <i class="fa-solid fa-user-check text-emerald-400 text-sm"></i>
+                <div>
+                    <span class="text-slate-400">Mode Profil :</span>
+                    <span id="statProfile" class="font-bold text-emerald-400 ml-1">Chargement...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Live Toast Notification -->
+        <div id="toastNotification" class="hidden mb-6 p-4 rounded-xl bg-blue-900/30 border border-blue-500/30 text-blue-200 text-sm flex items-center justify-between animate-slide-in">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-circle-check text-blue-400"></i>
+                <span id="toastMessage">Action enregistrée avec succès.</span>
+            </div>
+            <button onclick="document.getElementById('toastNotification').classList.add('hidden')" class="text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- 🚀 LIVE PIPELINE TELEMETRY & STEPS TRACKER CARD -->
+        <div id="pipelineTrackerCard" class="hidden mb-8 p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-blue-950/40 border border-blue-500/40 shadow-2xl shadow-blue-950/50 animate-slide-in">
+            
+            <!-- Top Tracker Header with Task Label & Live Counters -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5 pb-4 border-b border-slate-800/80">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center text-xl shadow-inner">
+                        <i class="fa-solid fa-microchip animate-pulse"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 id="pipelineTaskLabel" class="text-base font-bold text-white tracking-tight">
+                                Traitement Cognitif en Direct
+                            </h3>
+                            <span id="pipelineStatusBadge" class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase flex items-center gap-1">
+                                <i class="fa-solid fa-spinner animate-spin text-[10px]"></i> En cours
+                            </span>
+                        </div>
+                        <p id="pipelineDetailText" class="text-xs text-slate-400 mt-0.5">Initialisation du scan multi-sources...</p>
+                    </div>
+                </div>
+
+                <!-- Live Dual KPI Counters & Timer -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Timer -->
+                    <div class="px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs font-mono font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-regular fa-clock text-amber-400"></i>
+                        <span>Temps :</span>
+                        <span id="pipelineTimerVal" class="text-white">0.0s</span>
+                    </div>
+
+                    <!-- News Flux Found Counter -->
+                    <div class="px-3 py-1.5 rounded-xl bg-blue-600/15 border border-blue-500/30 text-xs font-medium text-blue-300 flex items-center gap-2">
+                        <i class="fa-solid fa-rss text-blue-400"></i>
+                        <span>Nombre de news flux trouvé :</span>
+                        <span id="pipelineNewsCount" class="font-bold text-sm text-white bg-blue-500/30 px-2 py-0.5 rounded">0</span>
+                    </div>
+
+                    <!-- Summaries Generated Counter -->
+                    <div class="px-3 py-1.5 rounded-xl bg-emerald-600/15 border border-emerald-500/30 text-xs font-medium text-emerald-300 flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i>
+                        <span>Nombre d'actu résumé :</span>
+                        <span id="pipelineSummariesCount" class="font-bold text-sm text-white bg-emerald-500/30 px-2 py-0.5 rounded">0</span>
+                    </div>
+
+                    <button onclick="document.getElementById('pipelineTrackerCard').classList.add('hidden')" title="Masquer le panneau" class="text-slate-500 hover:text-slate-300 p-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-800 rounded-full h-2.5 mb-6 overflow-hidden border border-slate-700/60 shadow-inner">
+                <div id="pipelineProgressBar" class="bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-400 h-full rounded-full transition-all duration-300 w-0"></div>
+            </div>
+
+            <!-- 5 Interactive Pipeline Steps -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs mb-4">
+                
+                <!-- Step 1 : Collecte -->
+                <div id="step-ingestion" class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 transition-all flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-satellite-dish text-blue-400"></i> 1. Collecte
+                        </span>
+                        <span class="step-icon text-slate-500"><i class="fa-solid fa-circle-notch animate-spin"></i></span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 truncate">Scan des 726 flux</span>
+                </div>
+
+                <!-- Step 2 : Vectorisation -->
+                <div id="step-vectorization" class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 opacity-60 transition-all flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-dna text-purple-400"></i> 2. Vecteurs
+                        </span>
+                        <span class="step-icon text-slate-600"><i class="fa-regular fa-circle"></i></span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 truncate">Embeddings texte</span>
+                </div>
+
+                <!-- Step 3 : Clustering -->
+                <div id="step-clustering" class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 opacity-60 transition-all flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-cubes-stacked text-amber-400"></i> 3. Clusters
+                        </span>
+                        <span class="step-icon text-slate-600"><i class="fa-regular fa-circle"></i></span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 truncate">Recoupements</span>
+                </div>
+
+                <!-- Step 4 : Synthèse IA (LLM) -->
+                <div id="step-synthesis" class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 opacity-60 transition-all flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i> 4. Synthèse IA
+                        </span>
+                        <span class="step-icon text-slate-600"><i class="fa-regular fa-circle"></i></span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 truncate">Génération LLM</span>
+                </div>
+
+                <!-- Step 5 : Diffusion -->
+                <div id="step-completed" class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 opacity-60 transition-all flex flex-col justify-between col-span-2 sm:col-span-1">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-paper-plane text-emerald-400"></i> 5. Diffusion
+                        </span>
+                        <span class="step-icon text-slate-600"><i class="fa-regular fa-circle"></i></span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 truncate">Diffusion SSE</span>
+                </div>
+
+            </div>
+
+            <!-- 📟 Live Terminal Log Console (Granular Stream View) -->
+            <div class="mb-4 border border-slate-800/80 rounded-xl bg-black/60 overflow-hidden backdrop-blur-sm">
+                <div class="px-3.5 py-2 bg-slate-900/90 border-b border-slate-800/80 flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2 text-slate-300 font-mono">
+                        <i class="fa-solid fa-terminal text-emerald-400"></i>
+                        <span class="font-bold">Console d'Ingestion & Télémétrie en Direct</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-[11px] text-emerald-400 flex items-center gap-1.5 font-mono">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span id="consoleStreamStatus">Flux actif</span>
+                        </span>
+                        <button onclick="document.getElementById('pipelineLogStream').innerHTML=''" class="text-[11px] text-slate-400 hover:text-white transition-colors">
+                            <i class="fa-solid fa-eraser mr-1"></i>Vider
+                        </button>
+                    </div>
+                </div>
+                <div id="pipelineLogStream" class="p-3 font-mono text-[11px] text-slate-300 h-32 overflow-y-auto space-y-1 select-text scroll-smooth">
+                    <div class="text-slate-500 italic">> Console prête. En attente du déclenchement d'un scan ou d'une simulation...</div>
+                </div>
+            </div>
+
+            <!-- Final Completion Summary Message Box -->
+            <div id="pipelineSummaryRecapBox" class="hidden p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+                    <span id="pipelineRecapText">Opération terminée.</span>
+                </div>
+                <button onclick="document.getElementById('pipelineTrackerCard').classList.add('hidden')" class="px-3 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-white font-semibold text-xs border border-emerald-500/30">
+                    Fermer
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Open Mode Banner -->
+        <div id="openBroadcastBanner" class="hidden mb-6 p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-globe text-emerald-400 text-base"></i>
+                <div>
+                    <strong class="font-bold text-white">Mode Flux Ouvert Actif :</strong>
+                    <span>Aucun centre d'intérêt défini. Toutes les actualités confirmées du web vous sont transmises sans filtre thématique.</span>
+                </div>
+            </div>
+            <button onclick="openProfileModal()" class="px-3 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 font-semibold text-white">
+                Personnaliser
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- LEFT / MAIN COLUMN (2 cols): Multi-Source News -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Section Header -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-down-short-wide text-blue-400"></i>
+                            Fil d'Actualités Confirmées Multi-Sources
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Chronologique inversé : les plus récentes en haut, les plus anciennes descendent</p>
+                    </div>
+                    <div class="flex items-center gap-2 text-[11px]">
+                        <span class="px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-bold">4+ sources</span>
+                        <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">3 sources</span>
+                        <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">2 sources</span>
+                    </div>
+                </div>
+
+                <!-- Multi-Source Stream Container -->
+                <div id="multiSourceStream" class="space-y-6">
+                    <div id="emptyMultiState" class="text-center py-16 border border-dashed border-slate-800 rounded-2xl bg-slate-900/20">
+                        <div class="w-14 h-14 rounded-full bg-slate-800/80 flex items-center justify-center mx-auto mb-3 text-slate-500">
+                            <i class="fa-solid fa-radar text-xl animate-spin" style="animation-duration: 6s;"></i>
+                        </div>
+                        <h3 class="text-sm font-semibold text-slate-300">En attente de recoupements multi-sources</h3>
+                        <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                            Cliquez sur "Simuler Événements" ou "Rattrapage 24h" pour observer les étapes du pipeline IA en direct.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN (1 col): Single-Source Bubble -->
+            <div class="space-y-6">
+                <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 shadow-lg">
+                    <div class="flex items-center justify-between mb-1">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+                            Bulle "1 Seule Source" (Signaux Isolés)
+                        </h2>
+                        <span id="singleCountBadge" class="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] font-mono text-purple-400 font-bold">0 signal</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        Articles uniques récents classés par ordre d'arrivée. Statut <span class="text-purple-400 font-medium">Non Confirmé</span>.
+                    </p>
+                </div>
+
+                <div id="singleSourceStream" class="space-y-4">
+                    <div id="emptySingleState" class="text-center py-12 border border-dashed border-slate-800/60 rounded-2xl bg-slate-900/20 text-xs text-slate-500">
+                        Aucun signal isolé pour l'instant.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal 0 : Répertoire des Sources & Réseau de Flux -->
+    <div id="sourcesModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden animate-slide-in my-6 max-h-[85vh] flex flex-col">
+            
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-purple-600/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
+                        <i class="fa-solid fa-network-wired text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            Répertoire Complet des Sources & Réseau de Flux
+                            <span id="sourcesCountBadge" class="px-2.5 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-400 text-xs font-mono font-bold">... flux</span>
+                        </h3>
+                        <p class="text-xs text-slate-400">Tous les médias d'articles, journaux d'investigation et API de streaming connectés</p>
+                    </div>
+                </div>
+                <button onclick="closeSourcesModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="px-6 py-3 border-b border-slate-800/80 bg-slate-900/50 flex flex-col sm:flex-row items-center gap-3 justify-between">
+                <div class="relative w-full sm:w-80">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                    <input type="text" id="sourceSearchInput" placeholder="Rechercher une source (ex: Le Monde, FT, Reuters, arXiv...)" oninput="filterSourcesList()" class="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500">
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                    <select id="sourceCategoryFilter" onchange="filterSourcesList()" class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-purple-500">
+                        <option value="all">Toutes les catégories</option>
+                    </select>
+                    <select id="sourceTierFilter" onchange="filterSourcesList()" class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-purple-500">
+                        <option value="all">Tous les tiers</option>
+                        <option value="1">Tier 1 (Crédibilité Majeure)</option>
+                        <option value="2">Tier 2 (Spécialisé / Tech)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-bolt"></i>
+                        Connecteurs de Streaming & Protocoles Temps Réel (Hors RSS)
+                    </h4>
+                    <div id="connectorsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                            <i class="fa-solid fa-newspaper"></i>
+                            Médias, Journaux & Flux RSS Indexés
+                        </h4>
+                        <span id="filteredSourcesCount" class="text-xs text-slate-500">...</span>
+                    </div>
+                    <div id="rssSourcesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                </div>
+            </div>
+
+            <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/80 flex items-center justify-between text-xs text-slate-500">
+                <span>Total : <strong class="text-slate-300" id="modalFooterCount">726 sources</strong> réparties sur le globe</span>
+                <button onclick="closeSourcesModal()" class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 0 : Santé & Télémétrie des Flux (A3) -->
+    <div id="sourceHealthModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden animate-slide-in my-8">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Télémétrie Santé des Flux & Quarantaine</h3>
+                        <p class="text-xs text-slate-400">Monitoring temps réel, latences et auto-quarantaine des flux RSS</p>
+                    </div>
+                </div>
+                <button onclick="closeHealthModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+                <!-- Summary Metrics Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="p-3.5 rounded-xl bg-slate-800/50 border border-slate-700/60">
+                        <span class="text-[11px] text-slate-400 uppercase font-semibold block mb-1">Total Flux Suivis</span>
+                        <span id="healthTotalTracked" class="text-xl font-bold text-white font-mono">0</span>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30">
+                        <span class="text-[11px] text-emerald-400 uppercase font-semibold block mb-1">Flux Sains (OK)</span>
+                        <span id="healthOkCount" class="text-xl font-bold text-emerald-300 font-mono">0</span>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/30">
+                        <span class="text-[11px] text-rose-400 uppercase font-semibold block mb-1">Erreurs Détectées</span>
+                        <span id="healthErrCount" class="text-xl font-bold text-rose-300 font-mono">0</span>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/30">
+                        <span class="text-[11px] text-amber-400 uppercase font-semibold block mb-1">En Quarantaine</span>
+                        <span id="healthQuarantineCount" class="text-xl font-bold text-amber-300 font-mono">0</span>
+                    </div>
+                </div>
+
+                <!-- Sources List Table -->
+                <div class="border border-slate-800 rounded-xl overflow-hidden">
+                    <div class="px-4 py-2.5 bg-slate-800/80 border-b border-slate-700 text-xs font-semibold text-slate-300 flex justify-between items-center">
+                        <span>Journal de Santé des Sources</span>
+                        <button onclick="loadHealthData()" class="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 text-[11px]">
+                            <i class="fa-solid fa-arrows-rotate"></i> Rafraîchir
+                        </button>
+                    </div>
+                    <div id="healthSourcesList" class="divide-y divide-slate-800 max-h-72 overflow-y-auto text-xs font-mono">
+                        <div class="p-4 text-center text-slate-500 italic">Chargement des données de télémétrie...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/80 flex items-center justify-end">
+                <button onclick="closeHealthModal()" class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal : Fiche d'Identité & Transparence Média -->
+    <div id="mediaIdentityModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-slide-in my-8">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-cyan-600/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
+                        <i class="fa-solid fa-id-card text-base"></i>
+                    </div>
+                    <div>
+                        <h3 id="cardMediaTitle" class="text-base font-bold text-white flex items-center gap-2">Carte d'Identité Média</h3>
+                        <p id="cardMediaDomain" class="text-xs text-slate-400 font-mono"></p>
+                    </div>
+                </div>
+                <button onclick="closeMediaIdentityModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="cardMediaContent" class="p-6 space-y-4 text-xs text-slate-300">
+                <!-- Dynamically populated via openMediaIdentityModal() -->
+            </div>
+            <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/80 flex items-center justify-between">
+                <span id="cardMediaTierBadge" class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold"></span>
+                <button onclick="closeMediaIdentityModal()" class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 1 : Configuration Seuil de Criticité -->
+    <div id="criticalityModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-slide-in">
+            
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+                        <i class="fa-solid fa-gauge-high"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Seuil de Criticité</h3>
+                        <p class="text-xs text-slate-400">Ajustez le niveau de confirmation requis</p>
+                    </div>
+                </div>
+                <button onclick="closeCriticalityModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form onsubmit="saveCriticalitySettings(event)" class="p-6 space-y-6">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Nombre minimum de sources</label>
+                        <span id="critSourcesVal" class="text-sm font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">3 sources</span>
+                    </div>
+                    <input type="range" id="critSourcesInput" min="1" max="6" step="1" value="3" 
+                        oninput="document.getElementById('critSourcesVal').innerText = this.value + ' source(s)'" 
+                        class="w-full accent-amber-500 cursor-pointer">
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Fenêtre temporelle d'accélération</label>
+                        <span id="critMinutesVal" class="text-sm font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">&lt; 20 minutes</span>
+                    </div>
+                    <input type="range" id="critMinutesInput" min="5" max="120" step="5" value="20" 
+                        oninput="document.getElementById('critMinutesVal').innerText = '< ' + this.value + ' minutes'" 
+                        class="w-full accent-blue-500 cursor-pointer">
+                </div>
+
+                <div class="pt-2 border-t border-slate-800 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeCriticalityModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300">
+                        Annuler
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-xs font-semibold text-white shadow-md shadow-amber-600/30 flex items-center gap-2">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Appliquer</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2 : Modification Profil -->
+    <div id="profileModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-slide-in my-8">
+            
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Édition du Profil Cognitif</h3>
+                        <p class="text-xs text-slate-400">Pondération des thèmes ou Mode Tout Afficher</p>
+                    </div>
+                </div>
+                <button onclick="closeProfileModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="profileForm" onsubmit="saveUserProfile(event)" class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Nom d'utilisateur</label>
+                        <input type="text" id="profUsername" value="default_user" required class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Langue de synthèse</label>
+                        <select id="profLang" class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500">
+                            <option value="fr">Français (FR)</option>
+                            <option value="en">English (EN)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Seuil d'alerte (Score)</label>
+                        <div class="flex items-center gap-2">
+                            <input type="range" id="profThreshold" min="0.50" max="0.90" step="0.05" value="0.65" oninput="document.getElementById('thresholdVal').innerText = this.value" class="w-full accent-blue-500 cursor-pointer">
+                            <span id="thresholdVal" class="text-xs font-mono font-bold text-blue-400 w-8">0.65</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">URL Webhook Push (Optionnel)</label>
+                    <input type="url" id="profWebhook" placeholder="https://discord.com/api/webhooks/..." class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500 placeholder-slate-500">
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Centres d'intérêt & Filtres Thématiques</label>
+                            <p class="text-[11px] text-slate-500">Laissez vide pour afficher <strong>TOUTES</strong> les actualités du monde sans restriction.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="clearAllInterests()" class="text-xs text-rose-400 hover:text-rose-300">
+                                Vider (Tout afficher)
+                            </button>
+                            <button type="button" onclick="addNewInterestRow()" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i> Ajouter sujet
+                            </button>
+                        </div>
+                    </div>
+                    <div id="interestsContainer" class="space-y-3"></div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Règles d'Exclusion</label>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="newRuleInput" placeholder="Ex: télé-réalité, people..." class="flex-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500 placeholder-slate-500">
+                        <button type="button" onclick="addRejectionRule()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700">
+                            Ajouter
+                        </button>
+                    </div>
+                    <div id="rulesContainer" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="border-t border-slate-800 pt-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <label class="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-crosshairs"></i> Watchlist d'Entités Nommées (Fast-Track)
+                            </label>
+                            <p class="text-[11px] text-slate-500">Alerte push Telegram prioritaire dès qu'une de ces entités est citée (ex: OpenAI, One Piece, Elon Musk...).</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="newEntityInputWeb" placeholder="Ex: OpenAI, Sam Altman, One Piece..." class="flex-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-amber-500 placeholder-slate-500">
+                        <button type="button" onclick="addWatchlistEntityWeb()" class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-md">
+                            Ajouter
+                        </button>
+                    </div>
+                    <!-- Quick chips -->
+                    <div class="flex flex-wrap gap-1.5 mb-2.5">
+                        <span class="text-[10px] text-slate-400 self-center mr-1">Suggestions :</span>
+                        <button type="button" onclick="addSuggestedEntity('OpenAI')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-amber-500/20 border border-slate-700 text-[11px] text-amber-300 transition-colors">+ OpenAI</button>
+                        <button type="button" onclick="addSuggestedEntity('Elon Musk')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-amber-500/20 border border-slate-700 text-[11px] text-amber-300 transition-colors">+ Elon Musk</button>
+                        <button type="button" onclick="addSuggestedEntity('One Piece')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-amber-500/20 border border-slate-700 text-[11px] text-amber-300 transition-colors">+ One Piece</button>
+                        <button type="button" onclick="addSuggestedEntity('Claude 3.5')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-amber-500/20 border border-slate-700 text-[11px] text-amber-300 transition-colors">+ Claude 3.5</button>
+                        <button type="button" onclick="addSuggestedEntity('Sam Altman')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-amber-500/20 border border-slate-700 text-[11px] text-amber-300 transition-colors">+ Sam Altman</button>
+                        <button type="button" onclick="addSuggestedEntity('NVIDIA')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-amber-500/20 border border-slate-700 text-[11px] text-amber-300 transition-colors">+ NVIDIA</button>
+                        <button type="button" onclick="addSuggestedEntity('Jujutsu Kaisen')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-amber-500/20 border border-slate-700 text-[11px] text-amber-300 transition-colors">+ Jujutsu Kaisen</button>
+                    </div>
+                    <div id="watchlistContainer" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300">
+                        Annuler
+                    </button>
+                    <button type="submit" id="btnSaveProfile" class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-md shadow-blue-600/30 flex items-center gap-2">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Enregistrer la Configuration</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    <!-- ==================== 1. Telegram Modal ==================== -->
+    <div id="telegramModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-slide-in my-8">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center border border-sky-500/30">
+                        <i class="fa-brands fa-telegram text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Connexion Telegram Bot</h3>
+                        <p class="text-xs text-slate-400">Push instantané des alertes et du Morning Briefing</p>
+                    </div>
+                </div>
+                <button onclick="closeTelegramModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Token du Bot Telegram</label>
+                    <input type="text" id="tgBotToken" placeholder="123456789:ABCdefGhIJKlmNoPQRstuVWXyz" class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-sky-500 font-mono placeholder-slate-500">
+                    <p class="text-[11px] text-slate-500 mt-1">Obtenu auprès de @BotFather sur Telegram.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Chat ID de destination</label>
+                    <input type="text" id="tgChatId" placeholder="Ex: 987654321 ou -100123456789" class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-sky-500 font-mono placeholder-slate-500">
+                    <p class="text-[11px] text-slate-500 mt-1">Votre ID personnel ou d'un canal (obtenu via @userinfobot).</p>
+                </div>
+
+                <div class="flex items-center justify-between p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
+                    <div>
+                        <span class="text-xs font-semibold text-white block">Notifications Push Actives</span>
+                        <span class="text-[11px] text-slate-400">Acheminer les alertes vérifiées et la watchlist</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="tgEnabled" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                    </label>
+                </div>
+
+                <div class="pt-2">
+                    <button type="button" onclick="testTelegramPush()" id="btnTestTg" class="w-full px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center justify-center gap-2 transition-all">
+                        <i class="fa-solid fa-paper-plane text-sky-400"></i>
+                        <span>Tester Notification</span>
+                    </button>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeTelegramModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300">
+                        Fermer
+                    </button>
+                    <button type="button" onclick="saveTelegramSettings()" id="btnSaveTg" class="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-xs font-semibold text-white shadow-md shadow-sky-600/30 flex items-center gap-2">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Enregistrer</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================== 4. Veille Contenu (YouTube & Releases) Modal ==================== -->
+    <div id="contentModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden animate-slide-in my-8 flex flex-col max-h-[88vh]">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-red-600/20 text-red-400 flex items-center justify-center border border-red-500/30">
+                        <i class="fa-solid fa-play text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Veille Contenu Multimédia</h3>
+                        <p class="text-xs text-slate-400">Vidéos YouTube, Releases GitHub et Comptes Clés</p>
+                    </div>
+                </div>
+                <button onclick="closeContentModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4 overflow-y-auto flex-1">
+                <div class="flex items-center gap-2 border-b border-slate-800 pb-3">
+                    <button type="button" onclick="switchContentTab('youtube')" id="tabBtnYt" class="px-3 py-1.5 rounded-lg bg-red-600/20 text-red-300 border border-red-500/30 text-xs font-semibold">
+                        <i class="fa-brands fa-youtube mr-1"></i> Chaînes YouTube
+                    </button>
+                    <button type="button" onclick="switchContentTab('releases')" id="tabBtnRel" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white border border-slate-700 text-xs font-semibold">
+                        <i class="fa-solid fa-tag mr-1"></i> Releases Outils
+                    </button>
+                </div>
+
+                <div id="contentLoading" class="py-10 text-center space-y-2">
+                    <div class="inline-block animate-spin rounded-full h-7 w-7 border-t-2 border-b-2 border-red-400"></div>
+                    <p class="text-xs text-slate-400">Chargement des flux multimédias...</p>
+                </div>
+
+                <div id="contentYtView" class="space-y-3">
+                    <div id="ytVideosContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                </div>
+
+                <div id="contentRelView" class="hidden space-y-3">
+                    <div id="relContainer" class="space-y-2.5"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-600">
+        NewsStreamAI • Pipeline Cognitif en Direct • Réseau Universel de 726 Sources & Connecteurs
+    </footer>
+
+    <!-- Client-Side JavaScript -->
+    <script>
+        const STORAGE_KEY = 'newsstream_alerts_history_v1';
+        let allAlerts = [];
+        let eventSource = null;
+        let criticalityConfig = { min_sources: 3, window_minutes: 20 };
+        let allSourcesData = { rss_sources: [], streaming_connectors: [], total_sources_count: 726 };
+        let currentProfileData = {
+            username: "default_user",
+            preferred_language: "fr",
+            min_score_threshold: 0.65,
+            webhook_url: "",
+            interests: {},
+            rejection_rules: []
+        };
+
+        function loadStoredAlerts() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    allAlerts = JSON.parse(stored);
+                }
+            } catch (err) {
+                console.warn('Failed to load local storage alerts:', err);
+                allAlerts = [];
+            }
+        }
+
+        function persistAlerts() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(allAlerts.slice(0, 200)));
+            } catch (err) {
+                console.warn('Failed to save to local storage:', err);
+            }
+        }
+
+        function clearLocalHistory() {
+            if (confirm("Effacer tout l'historique permanent des alertes stockées sur cette page ?")) {
+                allAlerts = [];
+                localStorage.removeItem(STORAGE_KEY);
+                renderAllStreams();
+                showToast("🧹 Historique local effacé.");
+            }
+        }
+
+        function connectSSE() {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const statusBadge = document.getElementById('statusBadge');
+
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            eventSource = new EventSource('/api/stream/live');
+
+            eventSource.onopen = () => {
+                statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
+                statusText.innerText = 'En direct';
+                statusBadge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-xs font-medium text-emerald-300';
+                fetchInitialState();
+            };
+
+            // 1. Alerts event listener
+            eventSource.addEventListener('alert', (e) => {
+                try {
+                    const alertData = JSON.parse(e.data);
+                    handleIncomingAlert(alertData);
+                } catch (err) {
+                    console.error('Failed to parse SSE alert event:', err);
+                }
+            });
+
+            // 2. Live Pipeline Telemetry Step Event Listener
+            eventSource.addEventListener('pipeline_step', (e) => {
+                try {
+                    const stepData = JSON.parse(e.data);
+                    handlePipelineTelemetry(stepData);
+                } catch (err) {
+                    console.error('Failed to parse pipeline step event:', err);
+                }
+            });
+
+            // 3. Live Pipeline Granular Log Event Listener
+            eventSource.addEventListener('pipeline_log', (e) => {
+                try {
+                    const logData = JSON.parse(e.data);
+                    appendConsoleLog(logData.log);
+                    if (logData.news_count !== undefined) {
+                        const newsElem = document.getElementById('pipelineNewsCount');
+                        if (newsElem) newsElem.innerText = logData.news_count;
+                    }
+                    if (logData.progress !== undefined) {
+                        const bar = document.getElementById('pipelineProgressBar');
+                        if (bar && logData.progress > parseInt(bar.style.width || '0')) {
+                            bar.style.width = `${logData.progress}%`;
+                        }
+                    }
+                } catch (err) {
+                    console.error('Failed to parse pipeline log event:', err);
+                }
+            });
+
+            eventSource.onerror = () => {
+                statusDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse';
+                statusText.innerText = 'Reconnexion...';
+                statusBadge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-950/40 border border-rose-500/30 text-xs font-medium text-rose-300';
+            };
+        }
+
+        let pipelineTimerInterval = null;
+        let pipelineStartTime = null;
+
+        function appendConsoleLog(msg) {
+            const consoleElem = document.getElementById('pipelineLogStream');
+            if (!consoleElem) return;
+            const timeStr = new Date().toLocaleTimeString();
+            const logRow = document.createElement('div');
+            logRow.className = 'text-[11px] leading-relaxed flex items-start gap-2 hover:bg-white/5 px-1 py-0.5 rounded';
+            logRow.innerHTML = `<span class="text-slate-500 font-mono text-[10px] select-none">[${timeStr}]</span> <span class="text-slate-200">${msg}</span>`;
+            consoleElem.appendChild(logRow);
+            
+            if (consoleElem.children.length > 200) {
+                consoleElem.removeChild(consoleElem.firstChild);
+            }
+            consoleElem.scrollTop = consoleElem.scrollHeight;
+        }
+
+        function startPipelineUI(taskLabel) {
+            const card = document.getElementById('pipelineTrackerCard');
+            const taskLabelElem = document.getElementById('pipelineTaskLabel');
+            const badgeElem = document.getElementById('pipelineStatusBadge');
+            const detailElem = document.getElementById('pipelineDetailText');
+            const timerValElem = document.getElementById('pipelineTimerVal');
+            const progressBar = document.getElementById('pipelineProgressBar');
+            const newsCountElem = document.getElementById('pipelineNewsCount');
+            const summariesCountElem = document.getElementById('pipelineSummariesCount');
+            const recapBox = document.getElementById('pipelineSummaryRecapBox');
+            const consoleElem = document.getElementById('pipelineLogStream');
+
+            // Reset and show card
+            card.classList.remove('hidden');
+            recapBox.classList.add('hidden');
+            if (consoleElem) {
+                consoleElem.innerHTML = '';
+            }
+            appendConsoleLog(`🚀 Lancement : ${taskLabel}...`);
+            taskLabelElem.innerText = taskLabel;
+            badgeElem.className = 'px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase flex items-center gap-1';
+            badgeElem.innerHTML = '<i class="fa-solid fa-spinner animate-spin text-[10px]"></i> En cours';
+            detailElem.innerText = 'Connexion aux flux et démarrage de l\'ingestion...';
+            progressBar.style.width = '10%';
+            newsCountElem.innerText = '0';
+            summariesCountElem.innerText = '0';
+
+            // Reset steps styling
+            const stepOrder = ['ingestion', 'vectorization', 'clustering', 'synthesis', 'completed'];
+            stepOrder.forEach((stepId, idx) => {
+                const elem = document.getElementById(`step-${stepId}`);
+                if (!elem) return;
+                const iconElem = elem.querySelector('.step-icon');
+                if (idx === 0) {
+                    elem.className = 'p-3 rounded-xl bg-blue-900/40 border border-blue-500 transition-all flex flex-col justify-between opacity-100 shadow-lg shadow-blue-500/20';
+                    iconElem.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin text-blue-400"></i>';
+                } else {
+                    elem.className = 'p-3 rounded-xl bg-slate-800/40 border border-slate-800 opacity-50 transition-all flex flex-col justify-between';
+                    iconElem.innerHTML = '<i class="fa-regular fa-circle text-slate-600"></i>';
+                }
+            });
+
+            // Start live stopwatch timer
+            if (pipelineTimerInterval) clearInterval(pipelineTimerInterval);
+            pipelineStartTime = Date.now();
+            pipelineTimerInterval = setInterval(() => {
+                const elapsed = ((Date.now() - pipelineStartTime) / 1000).toFixed(1);
+                timerValElem.innerText = `${elapsed}s`;
+            }, 100);
+        }
+
+        // Live Pipeline Telemetry Handler (Visual Stepper, News & Summaries Counters, Timers)
+        function handlePipelineTelemetry(data) {
+            const card = document.getElementById('pipelineTrackerCard');
+            const progressBar = document.getElementById('pipelineProgressBar');
+            const newsCountElem = document.getElementById('pipelineNewsCount');
+            const summariesCountElem = document.getElementById('pipelineSummariesCount');
+            const detailElem = document.getElementById('pipelineDetailText');
+            const badgeElem = document.getElementById('pipelineStatusBadge');
+            const taskLabelElem = document.getElementById('pipelineTaskLabel');
+            const timerValElem = document.getElementById('pipelineTimerVal');
+            const recapBox = document.getElementById('pipelineSummaryRecapBox');
+            const recapText = document.getElementById('pipelineRecapText');
+
+            card.classList.remove('hidden');
+
+            // Update Task Label
+            if (data.task_label) {
+                taskLabelElem.innerText = data.task_label;
+            }
+
+            // Update timer if provided
+            if (data.elapsed_seconds !== undefined) {
+                timerValElem.innerText = `${data.elapsed_seconds}s`;
+            }
+
+            // Update news found & summaries generated counts
+            if (data.news_count !== undefined) {
+                newsCountElem.innerText = data.news_count;
+            }
+            if (data.summaries_count !== undefined) {
+                summariesCountElem.innerText = data.summaries_count;
+            }
+
+            // Update detail text
+            detailElem.innerText = data.details || data.step_title;
+
+            // Update progress bar
+            progressBar.style.width = `${data.progress || 0}%`;
+
+            // Stepper stages
+            const stepOrder = ['ingestion', 'vectorization', 'clustering', 'synthesis', 'completed'];
+            const currentIdx = stepOrder.indexOf(data.step_id);
+
+            stepOrder.forEach((stepId, idx) => {
+                const elem = document.getElementById(`step-${stepId}`);
+                if (!elem) return;
+                const iconElem = elem.querySelector('.step-icon');
+
+                if (idx < currentIdx) {
+                    elem.className = 'p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/40 transition-all flex flex-col justify-between opacity-100';
+                    iconElem.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+                } else if (idx === currentIdx) {
+                    elem.className = 'p-3 rounded-xl bg-blue-900/40 border border-blue-500 transition-all flex flex-col justify-between opacity-100 shadow-lg shadow-blue-500/20';
+                    if (data.status === 'done') {
+                        iconElem.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+                    } else {
+                        iconElem.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin text-blue-400"></i>';
+                    }
+                } else {
+                    elem.className = 'p-3 rounded-xl bg-slate-800/40 border border-slate-800 opacity-50 transition-all flex flex-col justify-between';
+                    iconElem.innerHTML = '<i class="fa-regular fa-circle text-slate-600"></i>';
+                }
+            });
+
+            if (data.status === 'done' || data.step_id === 'completed') {
+                if (pipelineTimerInterval) {
+                    clearInterval(pipelineTimerInterval);
+                    pipelineTimerInterval = null;
+                }
+                if (data.elapsed_seconds !== undefined) {
+                    timerValElem.innerText = `${data.elapsed_seconds}s`;
+                }
+
+                badgeElem.className = 'px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase flex items-center gap-1';
+                badgeElem.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i> Terminé';
+                
+                // Show final summary recap box
+                const finalTime = data.elapsed_seconds || (pipelineStartTime ? ((Date.now() - pipelineStartTime)/1000).toFixed(1) : '0.0');
+                recapText.innerHTML = `<strong>Succès en ${finalTime}s !</strong> Nombre de news flux trouvé : <span class="font-bold underline text-white">${data.news_count || 0}</span> • Nombre d'actu résumé : <span class="font-bold underline text-emerald-300">${data.summaries_count || 0}</span>`;
+                recapBox.classList.remove('hidden');
+
+                // Refresh history from backend to guarantee all new items appear
+                fetch('/api/alerts/history')
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.alerts && res.alerts.length > 0) {
+                            res.alerts.forEach(sa => {
+                                const idx = allAlerts.findIndex(a => a.cluster_id === sa.cluster_id || a.alert_id === sa.alert_id);
+                                if (idx >= 0) allAlerts[idx] = sa;
+                                else allAlerts.unshift(sa);
+                            });
+                            persistAlerts();
+                            renderAllStreams();
+                        }
+                    })
+                    .catch(() => {});
+            } else {
+                badgeElem.className = 'px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase flex items-center gap-1';
+                badgeElem.innerHTML = '<i class="fa-solid fa-spinner animate-spin text-[10px]"></i> En cours';
+                recapBox.classList.add('hidden');
+            }
+        }
+
+        // Trigger 24-Hour Deep Catch-Up Scan
+        async function trigger24hScan() {
+            const btn = document.getElementById('btn24hScan');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin text-cyan-400"></i> Rattrapage...';
+
+            startPipelineUI('🌌 Rattrapage Global 24 Heures');
+            showToast('🌌 Scan des dernières 24 heures déclenché sur l\'ensemble du réseau...');
+
+            try {
+                await fetch('/api/stream/deep-scan-24h', { method: 'POST' });
+            } catch (err) {
+                console.error('24h scan trigger failed:', err);
+                showToast('❌ Erreur lors du déclenchement du scan 24h.');
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }, 3000);
+            }
+        }
+
+        // Trigger Simulated Multi-Source Breaking News
+        async function triggerSimulationPulse() {
+            const btn = document.getElementById('btnSimulate');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Traitement...';
+
+            startPipelineUI('⚡ Simulation de Flux Multi-Sources');
+            showToast('⚡ Ingestion lancée : étapes du pipeline affichées ci-dessous !');
+
+            try {
+                await fetch('/api/simulate-pulse', { method: 'POST' });
+            } catch (err) {
+                console.error('Simulation trigger failed:', err);
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }, 2000);
+            }
+        }
+
+        // Trigger Feed Tick (RSS Scan)
+        async function triggerFeedTick() {
+            const btn = document.getElementById('btnSync');
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin text-blue-400"></i>';
+            
+            startPipelineUI('🔄 Scan Temps Réel des 726 Flux');
+            showToast('🔄 Scan des 726 flux déclenché : télémétrie en direct active...');
+            
+            try {
+                await fetch('/api/stream/trigger-tick', { method: 'POST' });
+            } finally {
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fa-solid fa-rotate"></i>';
+                }, 2500);
+            }
+        }
+
+        async function fetchInitialState() {
+            try {
+                const [healthRes, clustersRes, alertsRes, profRes, sourcesRes] = await Promise.all([
+                    fetch('/api/health').then(r => r.json()),
+                    fetch('/api/clusters/active').then(r => r.json()),
+                    fetch('/api/alerts/history').then(r => r.json()),
+                    fetch('/api/profile/default_user').then(r => r.json()).catch(() => null),
+                    fetch('/api/sources').then(r => r.json()).catch(() => null)
+                ]);
+
+                if (sourcesRes) {
+                    allSourcesData = sourcesRes;
+                    document.getElementById('btnSourcesCount').innerText = sourcesRes.total_sources_count;
+                    document.getElementById('statTotalSources').innerText = `${sourcesRes.total_sources_count} flux actifs`;
+                    populateCategoryFilter(sourcesRes.categories || []);
+                }
+
+                if (healthRes.criticality_settings) {
+                    criticalityConfig = healthRes.criticality_settings;
+                    updateCriticalityDisplay();
+                }
+
+                document.getElementById('statClusters').innerText = clustersRes.total || 0;
+
+                if (profRes && profRes.username) {
+                    currentProfileData = profRes;
+                    updateProfileDisplay();
+                }
+
+                if (alertsRes.alerts && alertsRes.alerts.length > 0) {
+                    alertsRes.alerts.forEach(sa => {
+                        const idx = allAlerts.findIndex(a => a.cluster_id === sa.cluster_id || a.alert_id === sa.alert_id);
+                        if (idx >= 0) {
+                            allAlerts[idx] = sa;
+                        } else {
+                            allAlerts.push(sa);
+                        }
+                    });
+                }
+
+                persistAlerts();
+                renderAllStreams();
+            } catch (err) {
+                console.warn('Could not fetch initial stats:', err);
+            }
+        }
+
+        function openSourcesModal() {
+            document.getElementById('sourcesCountBadge').innerText = `${allSourcesData.total_sources_count} flux & connecteurs`;
+            document.getElementById('modalFooterCount').innerText = `${allSourcesData.total_sources_count} sources réparties`;
+            renderConnectorsList(allSourcesData.streaming_connectors || []);
+            filterSourcesList();
+            document.getElementById('sourcesModal').classList.remove('hidden');
+        }
+
+        function closeSourcesModal() {
+            document.getElementById('sourcesModal').classList.add('hidden');
+        }
+
+        function populateCategoryFilter(categories) {
+            const select = document.getElementById('sourceCategoryFilter');
+            select.innerHTML = '<option value="all">Toutes les catégories</option>';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.innerText = cat;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderConnectorsList(connectors) {
+            const container = document.getElementById('connectorsContainer');
+            container.innerHTML = '';
+
+            connectors.forEach(c => {
+                const card = document.createElement('div');
+                card.className = 'p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/30 flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-satellite text-purple-400"></i> ${c.name}
+                            </span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase">${c.type}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed mb-2">${c.description}</p>
+                    </div>
+                    <div class="flex items-center justify-between pt-2 border-t border-purple-500/20 text-[10px]">
+                        <span class="text-slate-500 font-mono">${c.category} • Lang: ${c.lang}</span>
+                        <a href="${c.url}" target="_blank" rel="noopener noreferrer" class="text-purple-400 hover:text-white flex items-center gap-1">
+                            <span>Explorer</span> <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+                        </a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterSourcesList() {
+            const query = (document.getElementById('sourceSearchInput').value || '').toLowerCase().trim();
+            const catFilter = document.getElementById('sourceCategoryFilter').value;
+            const tierFilter = document.getElementById('sourceTierFilter').value;
+
+            const rss = allSourcesData.rss_sources || [];
+
+            const filtered = rss.filter(s => {
+                const name = (s.name || '').toLowerCase();
+                const url = (s.url || '').toLowerCase();
+                const cat = (s.category || '').toLowerCase();
+
+                const matchQuery = !query || name.includes(query) || url.includes(query) || cat.includes(query);
+                const matchCat = catFilter === 'all' || s.category === catFilter;
+                const matchTier = tierFilter === 'all' || String(s.tier || 2) === tierFilter;
+
+                return matchQuery && matchCat && matchTier;
+            });
+
+            document.getElementById('filteredSourcesCount').innerText = `${filtered.length} média(s) affiché(s)`;
+
+            const container = document.getElementById('rssSourcesContainer');
+            container.innerHTML = '';
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-8 text-center text-xs text-slate-500">
+                        Aucun flux ne correspond aux filtres sélectionnés.
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.slice(0, 150).forEach(s => {
+                const card = document.createElement('div');
+                const tierBadge = s.tier === 1 
+                    ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Tier 1</span>'
+                    : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-700/60 text-slate-400 border border-slate-600/40">Tier 2</span>';
+
+                card.className = 'p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 hover:border-slate-600 transition-all flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-semibold text-white truncate max-w-[170px]" title="${s.name}">${formatSourceName(s.name)}</span>
+                            ${tierBadge}
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-mono block truncate">${s.category || 'Général'}</span>
+                    </div>
+                    <div class="flex items-center justify-between pt-2 mt-2 border-t border-slate-700/40 text-[10px]">
+                        <span class="text-slate-500 uppercase font-mono">${s.lang || 'fr'}</span>
+                        <a href="${s.url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium truncate max-w-[150px]">
+                            <span>Ouvrir flux RSS</span> <i class="fa-solid fa-rss text-[9px] text-amber-400"></i>
+                        </a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function formatSourceName(raw) {
+            return raw.replace(/^rss_/, '').replace(/_/g, ' ').toUpperCase();
+        }
+
+        function updateProfileDisplay() {
+            const count = Object.keys(currentProfileData.interests || {}).filter(k => currentProfileData.interests[k] > 0.1).length;
+            const banner = document.getElementById('openBroadcastBanner');
+            
+            if (count === 0) {
+                document.getElementById('statProfile').innerText = `Flux Ouvert (Tout type)`;
+                document.getElementById('statProfile').className = 'font-bold text-emerald-400 ml-1';
+                if (banner) banner.classList.remove('hidden');
+            } else {
+                document.getElementById('statProfile').innerText = `${currentProfileData.username} (${count} thèmes)`;
+                document.getElementById('statProfile').className = 'font-bold text-blue-400 ml-1';
+                if (banner) banner.classList.add('hidden');
+            }
+        }
+
+        let renderStreamDebounceTimer = null;
+
+        function scheduleRenderAllStreams() {
+            if (renderStreamDebounceTimer) return;
+            renderStreamDebounceTimer = setTimeout(() => {
+                renderStreamDebounceTimer = null;
+                requestAnimationFrame(() => {
+                    persistAlerts();
+                    renderAllStreams();
+                });
+            }, 120);
+        }
+
+        function handleIncomingAlert(alertData) {
+            const existingIdx = allAlerts.findIndex(a => a.cluster_id === alertData.cluster_id);
+            if (existingIdx >= 0) {
+                allAlerts.splice(existingIdx, 1);
+            }
+            allAlerts.unshift(alertData);
+            scheduleRenderAllStreams();
+        }
+
+        function renderAllStreams() {
+            const multiContainer = document.getElementById('multiSourceStream');
+            const singleContainer = document.getElementById('singleSourceStream');
+            
+            // 1. Fil d'Actualités Confirmées Multi-Sources (>= 2 sources)
+            const multiSourceAlerts = allAlerts.filter(a => (a.sources || []).length >= 2);
+
+            // Index all identifiers of multi-source alerts to guarantee 100% strict exclusion from single-source bubble
+            const multiClusterIds = new Set(multiSourceAlerts.map(a => a.cluster_id));
+            const multiUrls = new Set();
+            const multiTitles = multiSourceAlerts.map(a => (a.push_title || '').toLowerCase().trim());
+            
+            multiSourceAlerts.forEach(a => {
+                (a.sources || []).forEach(s => {
+                    if (s.url) multiUrls.add(s.url.toLowerCase().trim());
+                });
+            });
+
+            // 2. Bulle "1 Seule Source" (Signaux Isolés) : STRICTEMENT absente du fil multi-sources
+            const singleSourceAlerts = allAlerts.filter(a => {
+                const srcCount = (a.sources || []).length;
+                if (srcCount > 1) return false;
+                if (multiClusterIds.has(a.cluster_id)) return false;
+                if (a.sources && a.sources.length > 0) {
+                    const u = (a.sources[0].url || '').toLowerCase().trim();
+                    if (u && multiUrls.has(u)) return false;
+                }
+                const singleTitle = (a.push_title || '').toLowerCase().trim();
+                if (singleTitle && multiTitles.some(mt => mt.length > 10 && (mt.includes(singleTitle) || singleTitle.includes(mt)))) {
+                    return false;
+                }
+                return true;
+            });
+
+            document.getElementById('statAlerts').innerText = `${multiSourceAlerts.length} confirmées • ${singleSourceAlerts.length} isolées`;
+            document.getElementById('singleCountBadge').innerText = `${singleSourceAlerts.length} signal(s)`;
+
+            multiSourceAlerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            singleSourceAlerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            if (multiSourceAlerts.length === 0) {
+                multiContainer.innerHTML = `
+                    <div id="emptyMultiState" class="text-center py-16 border border-dashed border-slate-800 rounded-2xl bg-slate-900/20">
+                        <div class="w-14 h-14 rounded-full bg-slate-800/80 flex items-center justify-center mx-auto mb-3 text-slate-500">
+                            <i class="fa-solid fa-radar text-xl animate-spin" style="animation-duration: 6s;"></i>
+                        </div>
+                        <h3 class="text-sm font-semibold text-slate-300">En attente de recoupements multi-sources</h3>
+                        <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                            Cliquez sur "Simuler Événements" ou "Rattrapage 24h" pour observer les étapes du pipeline IA en direct.
+                        </p>
+                    </div>`;
+            } else {
+                multiContainer.innerHTML = '';
+                multiSourceAlerts.forEach(alert => {
+                    multiContainer.appendChild(createMultiCardElement(alert));
+                });
+            }
+
+            if (singleSourceAlerts.length === 0) {
+                singleContainer.innerHTML = `
+                    <div id="emptySingleState" class="text-center py-12 border border-dashed border-slate-800/60 rounded-2xl bg-slate-900/20 text-xs text-slate-500">
+                        Aucun signal isolé pour l'instant.
+                    </div>`;
+            } else {
+                singleContainer.innerHTML = '';
+                singleSourceAlerts.forEach(alert => {
+                    singleContainer.appendChild(createSingleCardElement(alert));
+                });
+            }
+        }
+
+        function getSourceTierStyles(sourceCount) {
+            if (sourceCount >= 4) {
+                return {
+                    borderClass: 'border-red-500/70 bg-gradient-to-br from-red-950/20 to-slate-900 shadow-red-950/30',
+                    badgeClass: 'bg-red-500/20 text-red-400 border-red-500/40',
+                    badgeText: `🚨 ${sourceCount} SOURCES • CONSENSUS MAJEUR`,
+                    pulse: true
+                };
+            } else if (sourceCount === 3) {
+                return {
+                    borderClass: 'border-amber-500/60 bg-gradient-to-br from-amber-950/20 to-slate-900 shadow-amber-950/20',
+                    badgeClass: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                    badgeText: `🔥 ${sourceCount} SOURCES • CONFIRMÉ`,
+                    pulse: false
+                };
+            } else {
+                return {
+                    borderClass: 'border-blue-500/40 bg-slate-900',
+                    badgeClass: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+                    badgeText: `⚡ ${sourceCount} SOURCES • EN DÉVELOPPEMENT`,
+                    pulse: false
+                };
+            }
+        }
+
+        function renderMarkdown(text) {
+            if (!text) return '';
+            let s = String(text);
+            // Normalize spaces inside asterisks: **text ** -> **text** , *text * -> *text*
+            s = s.replace(/\*\*([^\*\n]+?)\s+\*\*/g, '**$1** ');
+            s = s.replace(/\*\*\s+([^\*\n]+?)\*\*/g, ' **$1**');
+            s = s.replace(/(^|[^\*])\*([^\*\n]+?)\s+\*([^\*]|$)/g, '$1*$2* $3');
+            s = s.replace(/(^|[^\*])\*\s+([^\*\n]+?)\*([^\*]|$)/g, '$1 *$2*$3');
+            
+            // Bold
+            s = s.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
+            // Italic
+            s = s.replace(/\*([^\*]+?)\*/g, '<em class="italic text-slate-200">$1</em>');
+            return s;
+        }
+
+        function createMultiCardElement(alert) {
+            const sourceCount = (alert.sources || []).length;
+            const style = getSourceTierStyles(sourceCount);
+
+            const card = document.createElement('div');
+            card.id = `alert-${alert.alert_id}`;
+            card.className = `p-6 rounded-2xl border ${style.borderClass} shadow-xl transition-all hover:border-slate-600 animate-slide-in relative overflow-hidden`;
+            
+            if (style.pulse) {
+                card.classList.add('animate-pulse-border');
+            }
+
+            const bulletsHtml = (alert.bullet_points || []).map(b => 
+                `<li class="flex items-start gap-2.5 text-slate-300 text-sm leading-relaxed">
+                    <span class="text-blue-400 mt-1"><i class="fa-solid fa-circle-dot text-[9px]"></i></span>
+                    <span>${renderMarkdown(b)}</span>
+                </li>`
+            ).join('');
+
+            const sourcesHtml = (alert.sources || []).map(s => {
+                const safeName = (s.name || s.domain || 'Source').replace(/'/g, "\\'");
+                return `<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 text-xs border border-slate-700 transition-colors">
+                    <a href="${s.url}" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 font-medium inline-flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
+                        <span>${s.name}</span>
+                    </a>
+                    <button onclick="openMediaIdentityModal('${s.domain}', '${safeName}')" title="Voir la carte d'identité média" class="text-slate-400 hover:text-cyan-300 px-1.5 py-0.5 rounded bg-slate-900/80 text-[10px] border border-slate-700/80 ml-1 flex items-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-id-card text-cyan-400"></i> Fiche
+                    </button>
+                </div>`;
+            }).join('');
+
+            const enhancedBadgeHtml = alert.was_clickbait_enhanced ? 
+                `<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20" title="Titre original : ${alert.original_title || ''}">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Titre clarifié
+                </span>` : '';
+
+            const explainerHtml = alert.context_explainer ? 
+                `<div class="mb-4 p-3 rounded-xl bg-purple-950/20 border border-purple-500/30 text-purple-200 text-xs flex items-start gap-2.5">
+                    <i class="fa-solid fa-lightbulb text-purple-400 mt-0.5 text-sm"></i>
+                    <div>
+                        <strong class="text-purple-300 font-bold block mb-0.5">Éclairage éditorial</strong>
+                        <span>${renderMarkdown(alert.context_explainer)}</span>
+                    </div>
+                </div>` : '';
+
+            const sentimentHtml = alert.community_sentiment ? 
+                `<div class="mb-4 p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2.5">
+                    <i class="fa-solid fa-comments text-amber-400 mt-0.5 text-sm"></i>
+                    <div>
+                        <strong class="text-amber-300 font-bold block mb-0.5">Débats & Sentiment Communautaire</strong>
+                        <span>${renderMarkdown(alert.community_sentiment)}</span>
+                    </div>
+                </div>` : '';
+
+            card.innerHTML = `
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider border ${style.badgeClass}">
+                            ${style.badgeText}
+                        </span>
+                        <span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <i class="fa-solid fa-shield-check mr-1"></i>${alert.reliability_label}
+                        </span>
+                        ${enhancedBadgeHtml}
+                    </div>
+                    <div class="flex items-center gap-4 text-xs font-mono text-slate-400">
+                        <span title="Vélocité"><i class="fa-solid fa-gauge text-amber-400 mr-1"></i>Vél: <strong class="text-white">${(alert.velocity_score || 0).toFixed(2)}</strong></span>
+                        <span title="Score Hybride"><i class="fa-solid fa-bullseye text-blue-400 mr-1"></i>Score: <strong class="text-white">${(alert.hybrid_score || 0).toFixed(2)}</strong></span>
+                        <span class="text-blue-400 font-bold"><i class="fa-regular fa-clock mr-1"></i>${new Date(alert.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                </div>
+
+                <h3 class="text-xl sm:text-2xl font-bold font-editorial text-white mb-4 tracking-tight leading-snug">
+                    ${renderMarkdown(alert.push_title)}
+                </h3>
+
+                ${explainerHtml}
+
+                <ul class="space-y-2.5 mb-4 pl-1">
+                    ${bulletsHtml}
+                </ul>
+
+                ${sentimentHtml}
+
+                <div class="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
+                            <i class="fa-solid fa-newspaper text-slate-500"></i> ${sourceCount} Médias recoupés :
+                        </span>
+                        ${sourcesHtml}
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="submitFeedback('${alert.cluster_id}', '${escapeQuotes(alert.push_title)}', 'read')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 hover:text-emerald-400 border border-slate-700 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-thumbs-up"></i>
+                            <span>Pertinent</span>
+                        </button>
+                        <button onclick="submitFeedback('${alert.cluster_id}', '${escapeQuotes(alert.push_title)}', 'rejected')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 hover:text-rose-400 border border-slate-700 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-thumbs-down"></i>
+                            <span>Bruit</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        function createSingleCardElement(alert) {
+            const card = document.createElement('div');
+            card.id = `alert-${alert.alert_id}`;
+            card.className = 'p-4 rounded-xl bg-slate-900/90 border border-purple-500/30 hover:border-purple-500/60 transition-all shadow-md animate-slide-in';
+            
+            const source = (alert.sources && alert.sources[0]) ? alert.sources[0] : { name: "Source", domain: "web", url: "#" };
+            const snippet = (alert.bullet_points && alert.bullet_points[0]) ? alert.bullet_points[0] : "";
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20 uppercase">
+                        1 Source Unique
+                    </span>
+                    <span class="text-[11px] font-mono text-purple-400 font-bold">${new Date(alert.timestamp).toLocaleTimeString()}</span>
+                </div>
+                <h4 class="text-sm font-semibold text-slate-200 mb-2 leading-snug font-editorial">
+                    ${renderMarkdown(alert.push_title)}
+                </h4>
+                <p class="text-xs text-slate-400 mb-3 line-clamp-2">
+                    ${renderMarkdown(snippet)}
+                </p>
+                <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
+                    <a href="${source.url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium text-[11px]">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                        <span>${source.name} (${source.domain})</span>
+                    </a>
+                    <button onclick="submitFeedback('${alert.cluster_id}', '${escapeQuotes(alert.push_title)}', 'read')" title="Suivre ce sujet" class="text-slate-500 hover:text-emerald-400 p-1">
+                        <i class="fa-solid fa-thumbs-up"></i>
+                    </button>
+                </div>
+            `;
+            return card;
+        }
+
+        function escapeQuotes(str) {
+            return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        function openCriticalityModal() {
+            document.getElementById('critSourcesInput').value = criticalityConfig.min_sources;
+            document.getElementById('critSourcesVal').innerText = criticalityConfig.min_sources + ' source(s)';
+            document.getElementById('critMinutesInput').value = criticalityConfig.window_minutes;
+            document.getElementById('critMinutesVal').innerText = '< ' + criticalityConfig.window_minutes + ' minutes';
+            document.getElementById('criticalityModal').classList.remove('hidden');
+        }
+
+        function closeCriticalityModal() {
+            document.getElementById('criticalityModal').classList.add('hidden');
+        }
+
+        function updateCriticalityDisplay() {
+            document.getElementById('statCriticality').innerText = `≥ ${criticalityConfig.min_sources} sources / < ${criticalityConfig.window_minutes} min`;
+        }
+
+        async function saveCriticalitySettings(e) {
+            e.preventDefault();
+            const sources = parseInt(document.getElementById('critSourcesInput').value);
+            const minutes = parseInt(document.getElementById('critMinutesInput').value);
+
+            try {
+                const res = await fetch('/api/settings/criticality', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ min_sources: sources, window_minutes: minutes })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    criticalityConfig.min_sources = data.min_sources;
+                    criticalityConfig.window_minutes = data.window_minutes;
+                    updateCriticalityDisplay();
+                    closeCriticalityModal();
+                    showToast(`⚙️ Seuil sauvegardé : ≥ ${data.min_sources} sources en < ${data.window_minutes} min`);
+                }
+            } catch (err) {
+                console.error('Failed to update criticality settings:', err);
+                showToast('❌ Erreur lors de la mise à jour des seuils.');
+            }
+        }
+
+        function openProfileModal() {
+            document.getElementById('profUsername').value = currentProfileData.username || 'default_user';
+            document.getElementById('profLang').value = currentProfileData.preferred_language || 'fr';
+            document.getElementById('profThreshold').value = currentProfileData.min_score_threshold || 0.65;
+            document.getElementById('thresholdVal').innerText = currentProfileData.min_score_threshold || 0.65;
+            document.getElementById('profWebhook').value = currentProfileData.webhook_url || '';
+
+            renderInterestsList();
+            renderRulesList();
+            renderWatchlist();
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        function clearAllInterests() {
+            currentProfileData.interests = {};
+            renderInterestsList();
+            showToast("Mode Flux Ouvert : tous les thèmes seront acceptés.");
+        }
+
+        function renderInterestsList() {
+            const container = document.getElementById('interestsContainer');
+            container.innerHTML = '';
+
+            const keys = Object.keys(currentProfileData.interests || {});
+            if (keys.length === 0) {
+                container.innerHTML = `
+                    <div class="p-4 rounded-lg bg-slate-800/40 border border-dashed border-slate-700 text-center text-xs text-slate-400">
+                        <i class="fa-solid fa-globe text-blue-400 mb-1 text-base block"></i>
+                        Aucun filtre actif. Vous êtes en <strong class="text-white">Mode Flux Ouvert</strong> (toutes les actualités mondiales sont autorisées).
+                    </div>
+                `;
+                return;
+            }
+
+            Object.entries(currentProfileData.interests || {}).forEach(([topic, weight]) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/80 border border-slate-700/60';
+                row.innerHTML = `
+                    <span class="text-xs font-medium text-slate-200 w-44 truncate">${topic}</span>
+                    <input type="range" min="0.1" max="1.0" step="0.05" value="${weight}" 
+                        oninput="updateInterestWeight('${topic}', this.value, this)" 
+                        class="flex-1 accent-blue-500 cursor-pointer">
+                    <span class="text-xs font-mono font-bold text-blue-400 w-10 text-right">${parseFloat(weight).toFixed(2)}</span>
+                    <button type="button" onclick="removeInterest('${topic}')" class="text-slate-500 hover:text-rose-400 p-1 text-xs">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateInterestWeight(topic, val, inputElem) {
+            currentProfileData.interests[topic] = parseFloat(val);
+            inputElem.nextElementSibling.innerText = parseFloat(val).toFixed(2);
+        }
+
+        function removeInterest(topic) {
+            delete currentProfileData.interests[topic];
+            renderInterestsList();
+        }
+
+        function addNewInterestRow() {
+            const topic = prompt("Nom du centre d'intérêt (ex: Semi-conducteurs, Énergie Fusion) :");
+            if (topic && topic.trim()) {
+                currentProfileData.interests[topic.trim()] = 0.80;
+                renderInterestsList();
+            }
+        }
+
+        function renderRulesList() {
+            const container = document.getElementById('rulesContainer');
+            container.innerHTML = '';
+            (currentProfileData.rejection_rules || []).forEach(rule => {
+                const badge = document.createElement('span');
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium';
+                badge.innerHTML = `
+                    <span>${rule}</span>
+                    <button type="button" onclick="removeRejectionRule('${rule}')" class="hover:text-white ml-1">
+                        <i class="fa-solid fa-xmark text-[10px]"></i>
+                    </button>
+                `;
+                container.appendChild(badge);
+            });
+        }
+
+        function addRejectionRule() {
+            const input = document.getElementById('newRuleInput');
+            const rule = input.value.trim();
+            if (rule && !currentProfileData.rejection_rules.includes(rule)) {
+                currentProfileData.rejection_rules.push(rule);
+                input.value = '';
+                renderRulesList();
+            }
+        }
+
+        function removeRejectionRule(rule) {
+            currentProfileData.rejection_rules = currentProfileData.rejection_rules.filter(r => r !== rule);
+            renderRulesList();
+        }
+
+        function renderWatchlist() {
+            const container = document.getElementById('watchlistContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            (currentProfileData.entity_watchlist || []).forEach(ent => {
+                const badge = document.createElement('span');
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold';
+                badge.innerHTML = `
+                    <i class="fa-solid fa-crosshairs text-[10px]"></i>
+                    <span>${ent}</span>
+                    <button type="button" onclick="removeWatchlistEntityWeb('${escapeQuotes(ent)}')" class="hover:text-white ml-1">
+                        <i class="fa-solid fa-xmark text-[10px]"></i>
+                    </button>
+                `;
+                container.appendChild(badge);
+            });
+        }
+
+        function addWatchlistEntityWeb() {
+            const input = document.getElementById('newEntityInputWeb');
+            const val = input.value.trim();
+            if (val) {
+                currentProfileData.entity_watchlist = currentProfileData.entity_watchlist || [];
+                if (!currentProfileData.entity_watchlist.includes(val)) {
+                    currentProfileData.entity_watchlist.push(val);
+                    input.value = '';
+                    renderWatchlist();
+                }
+            }
+        }
+
+        function addSuggestedEntity(val) {
+            currentProfileData.entity_watchlist = currentProfileData.entity_watchlist || [];
+            if (!currentProfileData.entity_watchlist.includes(val)) {
+                currentProfileData.entity_watchlist.push(val);
+                renderWatchlist();
+            }
+        }
+
+        function removeWatchlistEntityWeb(ent) {
+            currentProfileData.entity_watchlist = (currentProfileData.entity_watchlist || []).filter(e => e !== ent);
+            renderWatchlist();
+        }
+
+        async function saveUserProfile(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSaveProfile');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Sauvegarde...';
+
+            currentProfileData.username = document.getElementById('profUsername').value.trim();
+            currentProfileData.preferred_language = document.getElementById('profLang').value;
+            currentProfileData.min_score_threshold = parseFloat(document.getElementById('profThreshold').value);
+            currentProfileData.webhook_url = document.getElementById('profWebhook').value.trim() || null;
+
+            try {
+                const res = await fetch('/api/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentProfileData)
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast('✅ Configuration du profil sauvegardée et persistée !');
+                    updateProfileDisplay();
+                    closeProfileModal();
+                }
+            } catch (err) {
+                console.error('Failed to save profile:', err);
+                showToast('❌ Erreur lors de la sauvegarde du profil.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        async function submitFeedback(clusterId, alertTitle, action) {
+            try {
+                const res = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: currentProfileData.username || 'default_user',
+                        cluster_id: clusterId,
+                        alert_title: alertTitle,
+                        action: action
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast(action === 'read' ? '👍 Intérêt renforcé pour cette catégorie.' : '📉 Intérêt réduit pour cette catégorie.');
+                    if (data.updated_interests) currentProfileData.interests = data.updated_interests;
+                    if (data.rejection_rules) currentProfileData.rejection_rules = data.rejection_rules;
+                    updateProfileDisplay();
+                }
+            } catch (err) {
+                console.error('Feedback submission error:', err);
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            const toastMsg = document.getElementById('toastMessage');
+            toastMsg.innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4000);
+        }
+
+        // ── Health Modal Functions (A3) ──
+        function openHealthModal() {
+            document.getElementById('sourceHealthModal').classList.remove('hidden');
+            loadHealthData();
+        }
+
+        function closeHealthModal() {
+            document.getElementById('sourceHealthModal').classList.add('hidden');
+        }
+
+        async function loadHealthData() {
+            const listElem = document.getElementById('healthSourcesList');
+            listElem.innerHTML = '<div class="p-4 text-center text-slate-500 italic">Interrogation des métriques de santé...</div>';
+            try {
+                const res = await fetch('/api/sources/health');
+                const data = await res.json();
+                
+                document.getElementById('healthTotalTracked').innerText = data.total_tracked || 0;
+                document.getElementById('healthOkCount').innerText = data.ok_count || 0;
+                document.getElementById('healthErrCount').innerText = data.error_count || 0;
+                document.getElementById('healthQuarantineCount').innerText = data.quarantined_count || 0;
+
+                if (!data.sources || data.sources.length === 0) {
+                    listElem.innerHTML = '<div class="p-4 text-center text-slate-500 italic">Aucune donnée de télémétrie enregistrée pour le moment. Lancez un scan ou une simulation pour alimenter le moniteur.</div>';
+                    return;
+                }
+
+                listElem.innerHTML = data.sources.map(s => {
+                    const isOk = s.last_status === 'ok';
+                    const badgeClass = isOk ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                    const isQuarantined = s.quarantined_until && (Date.now() / 1000 < s.quarantined_until);
+                    const qBadge = isQuarantined ? '<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 ml-2">Quarantaine</span>' : '';
+
+                    return `
+                        <div class="p-3 hover:bg-slate-800/40 flex items-center justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <span class="font-bold text-slate-200 truncate">${s.name}</span>
+                                    ${qBadge}
+                                </div>
+                                <div class="text-[11px] text-slate-500 truncate">
+                                    Dernier statut : <span class="text-slate-400">${s.last_error || 'Opérationnel'}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 text-right">
+                                <div class="text-[11px]">
+                                    <span class="text-slate-400">${s.avg_latency_ms || 0}ms</span>
+                                    <span class="text-slate-600 block text-[10px]">${s.total_items_fetched || 0} news</span>
+                                </div>
+                                <span class="px-2 py-0.5 rounded border text-[10px] font-bold uppercase ${badgeClass}">
+                                    ${s.last_status}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                listElem.innerHTML = '<div class="p-4 text-center text-rose-400 italic">Erreur lors de la récupération des données de santé.</div>';
+            }
+        }
+
+        async function openMediaIdentityModal(domain, name) {
+            const modal = document.getElementById('mediaIdentityModal');
+            const titleElem = document.getElementById('cardMediaTitle');
+            const domainElem = document.getElementById('cardMediaDomain');
+            const contentElem = document.getElementById('cardMediaContent');
+            const badgeElem = document.getElementById('cardMediaTierBadge');
+
+            modal.classList.remove('hidden');
+            titleElem.innerText = name || domain;
+            domainElem.innerText = domain;
+            contentElem.innerHTML = `<div class="py-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-xl text-cyan-400 mb-2"></i><p>Récupération de la fiche de transparence...</p></div>`;
+            badgeElem.className = "hidden";
+
+            try {
+                const res = await fetch(`/api/sources/${domain}/identity`);
+                const data = await res.json();
+
+                badgeElem.classList.remove('hidden');
+                badgeElem.innerText = `Tier ${data.tier || 2} • Fiabilité ${Math.round((data.reliability_score || 0.75) * 100)}%`;
+                badgeElem.className = data.tier === 1 ? 
+                    "px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : 
+                    "px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30";
+
+                contentElem.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
+                            <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block mb-1">Actionnariat & Propriétaire</span>
+                            <p class="text-sm font-semibold text-white">${data.owner || "Indépendant / Non documenté"}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
+                                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block mb-1">Ligne Éditoriale</span>
+                                <p class="font-medium text-slate-200">${data.orientation || "Généraliste"}</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
+                                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block mb-1">Modèle Économique</span>
+                                <p class="font-medium text-slate-200">${data.funding || "Abonnements / Pub"}</p>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
+                            <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block mb-1">Pays & Origine</span>
+                            <p class="font-medium text-slate-200">${data.country || "International"}</p>
+                        </div>
+                        ${data.description ? `
+                        <div class="p-3 rounded-xl bg-cyan-950/20 border border-cyan-500/30 text-cyan-200">
+                            <p class="italic text-[11px]">« ${data.description} »</p>
+                        </div>` : ''}
+                    </div>
+                `;
+            } catch (err) {
+                contentElem.innerHTML = `<div class="p-4 rounded-xl bg-red-950/30 text-red-400 border border-red-500/30">Impossible de charger la fiche de ce média.</div>`;
+            }
+        }
+
+        function closeMediaIdentityModal() {
+            document.getElementById('mediaIdentityModal').classList.add('hidden');
+        }
+
+        // ==================== Telegram Functions ====================
+        async function openTelegramModal() {
+            try {
+                const res = await fetch('/api/settings/telegram');
+                const data = await res.json();
+                document.getElementById('tgBotToken').value = data.raw_token || '';
+                document.getElementById('tgChatId').value = data.chat_id || '';
+                document.getElementById('tgEnabled').checked = data.enabled !== false;
+            } catch (e) {
+                console.warn('Error loading telegram settings:', e);
+            }
+            document.getElementById('telegramModal').classList.remove('hidden');
+        }
+
+        function closeTelegramModal() {
+            document.getElementById('telegramModal').classList.add('hidden');
+        }
+
+        async function saveTelegramSettings() {
+            const token = document.getElementById('tgBotToken').value.trim();
+            const chatId = document.getElementById('tgChatId').value.trim();
+            const enabled = document.getElementById('tgEnabled').checked;
+
+            const btn = document.getElementById('btnSaveTg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i>';
+
+            try {
+                const res = await fetch('/api/settings/telegram', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token, chat_id: chatId, enabled: enabled })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast('✅ Réglages Telegram enregistrés avec succès !');
+                    closeTelegramModal();
+                } else {
+                    showToast('❌ Erreur : ' + (data.detail || 'Vérifiez les données'));
+                }
+            } catch (err) {
+                showToast('❌ Erreur connexion serveur.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Enregistrer</span>';
+            }
+        }
+
+        async function testTelegramPush() {
+            const token = document.getElementById('tgBotToken').value.trim();
+            const chatId = document.getElementById('tgChatId').value.trim();
+            const btn = document.getElementById('btnTestTg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Envoi...';
+
+            try {
+                const res = await fetch('/api/notifications/test-telegram', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token || undefined, chat_id: chatId || undefined })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast('✅ Notification test reçue sur votre Telegram !');
+                } else {
+                    showToast('❌ Erreur Telegram : ' + (data.detail || 'Token invalide'));
+                }
+            } catch (err) {
+                showToast('❌ Échec de la transmission Telegram.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane text-sky-400"></i> <span>Tester Notification</span>';
+            }
+        }
+
+        async function dispatchBriefingFromTelegram() {
+            const btn = document.getElementById('btnBriefTg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Envoi...';
+            try {
+                const res = await fetch('/api/briefing/trigger-now', { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast('☀️ Morning Briefing expédié sur Telegram !');
+                } else {
+                    showToast('❌ ' + (data.detail || 'Erreur lors de l\'expédition'));
+                }
+            } catch (err) {
+                showToast('❌ Erreur serveur lors de la synthèse.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-sun text-amber-400"></i> <span>Expédier Briefing</span>';
+            }
+        }
+
+        // ==================== Demander au Flux (RAG) ====================
+        function openAskFluxModal() {
+            document.getElementById('askFluxModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('askFluxQuery').focus(), 100);
+        }
+
+        function closeAskFluxModal() {
+            document.getElementById('askFluxModal').classList.add('hidden');
+        }
+
+        function askFluxQuick(query) {
+            document.getElementById('askFluxQuery').value = query;
+            submitAskFlux();
+        }
+
+        async function submitAskFlux() {
+            const q = document.getElementById('askFluxQuery').value.trim();
+            if (!q) return;
+
+            const btn = document.getElementById('btnSubmitAsk');
+            const loading = document.getElementById('askFluxLoading');
+            const respBox = document.getElementById('askFluxResponse');
+
+            btn.disabled = true;
+            loading.classList.remove('hidden');
+            respBox.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/stream/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: q })
+                });
+                const data = await res.json();
+                loading.classList.add('hidden');
+
+                if (data.status === 'ok' && data.answer) {
+                    respBox.classList.remove('hidden');
+                    document.getElementById('askFluxAnswerText').innerHTML = data.answer.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                    
+                    const sourcesContainer = document.getElementById('askFluxSourcesList');
+                    sourcesContainer.innerHTML = '';
+                    if (data.sources && data.sources.length > 0) {
+                        data.sources.forEach(s => {
+                            const tag = document.createElement('a');
+                            tag.href = s.url || '#';
+                            tag.target = '_blank';
+                            tag.rel = 'noopener noreferrer';
+                            tag.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs hover:bg-indigo-500/20 transition-colors';
+                            tag.innerHTML = `<i class="fa-solid fa-link text-[9px]"></i> <span>${s.name}</span>`;
+                            sourcesContainer.appendChild(tag);
+                        });
+                    } else {
+                        sourcesContainer.innerHTML = '<span class="text-xs text-slate-500">Synthèse sémantique globale</span>';
+                    }
+                } else {
+                    respBox.classList.remove('hidden');
+                    document.getElementById('askFluxAnswerText').innerHTML = "<em>Aucune réponse probante n'a pu être formulée.</em>";
+                }
+            } catch (err) {
+                loading.classList.add('hidden');
+                respBox.classList.remove('hidden');
+                document.getElementById('askFluxAnswerText').innerHTML = `<span class="text-rose-400">Erreur lors de la requête : ${err.message}</span>`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function copyAskFluxAnswer() {
+            const txt = document.getElementById('askFluxAnswerText').innerText;
+            navigator.clipboard.writeText(txt).then(() => {
+                showToast('📋 Réponse copiée dans le presse-papier !');
+            });
+        }
+
+        // ==================== Morning Briefing ====================
+        async function openBriefingModal() {
+            document.getElementById('briefingModal').classList.remove('hidden');
+            loadTodayBriefing();
+        }
+
+        function closeBriefingModal() {
+            document.getElementById('briefingModal').classList.add('hidden');
+        }
+
+        async function loadTodayBriefing() {
+            const loading = document.getElementById('briefingLoading');
+            const content = document.getElementById('briefingContent');
+            loading.classList.remove('hidden');
+            content.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/briefing/today');
+                const data = await res.json();
+                loading.classList.add('hidden');
+
+                if (data.status === 'ok' && data.briefing) {
+                    const b = data.briefing;
+                    content.classList.remove('hidden');
+                    document.getElementById('briefingGreeting').innerText = b.greeting || 'Bonjour ! Voici votre briefing stratégique';
+                    document.getElementById('briefingRadarBadge').innerText = `${b.radar_count || allAlerts.length} flux analysés`;
+
+                    const list = document.getElementById('briefingHighlightsList');
+                    list.innerHTML = '';
+                    (b.key_highlights || []).forEach(h => {
+                        const card = document.createElement('div');
+                        card.className = 'p-4 rounded-xl bg-slate-800/80 border border-slate-700/80 space-y-2';
+                        card.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">${h.topic || 'GÉNÉRAL'}</span>
+                                <span class="text-xs text-slate-400 flex items-center gap-1">
+                                    <i class="fa-solid fa-shield-check text-emerald-400"></i> ${h.sources || 'Sources corroborées'}
+                                </span>
+                            </div>
+                            <h5 class="text-sm font-bold text-white">${h.headline}</h5>
+                            <p class="text-xs text-slate-300 leading-relaxed font-editorial">${(h.summary || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>
+                        `;
+                        list.appendChild(card);
+                    });
+                } else {
+                    content.classList.remove('hidden');
+                    document.getElementById('briefingGreeting').innerText = 'Briefing en cours de collecte';
+                    document.getElementById('briefingHighlightsList').innerHTML = `
+                        <div class="p-6 text-center text-xs text-slate-400">
+                            ${data.message || "Pas encore assez d'actualités corroborées pour composer un briefing complet. Utilisez 'Rattrapage 24h' ou 'Simuler'."}
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+                document.getElementById('briefingHighlightsList').innerHTML = `<div class="p-4 text-xs text-rose-400">Impossible de joindre le service de briefing.</div>`;
+            }
+        }
+
+        async function dispatchBriefingNow() {
+            const btn = document.getElementById('btnBriefModalTg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Envoi...';
+            try {
+                const res = await fetch('/api/briefing/trigger-now', { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast('☀️ Morning Briefing expédié sur votre Telegram !');
+                } else {
+                    showToast('❌ ' + (data.detail || 'Erreur d\'envoi Telegram'));
+                }
+            } catch (e) {
+                showToast('❌ Erreur de communication avec le serveur.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-brands fa-telegram"></i> <span>Envoyer Telegram</span>';
+            }
+        }
+
+        // ==================== Content Hub ====================
+        let activeContentTab = 'youtube';
+
+        function openContentModal() {
+            document.getElementById('contentModal').classList.remove('hidden');
+            loadContentHub();
+        }
+
+        function closeContentModal() {
+            document.getElementById('contentModal').classList.add('hidden');
+        }
+
+        function switchContentTab(tab) {
+            activeContentTab = tab;
+            const btnYt = document.getElementById('tabBtnYt');
+            const btnRel = document.getElementById('tabBtnRel');
+            const viewYt = document.getElementById('contentYtView');
+            const viewRel = document.getElementById('contentRelView');
+
+            if (tab === 'youtube') {
+                btnYt.className = 'px-3 py-1.5 rounded-lg bg-red-600/20 text-red-300 border border-red-500/30 text-xs font-semibold';
+                btnRel.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white border border-slate-700 text-xs font-semibold';
+                viewYt.classList.remove('hidden');
+                viewRel.classList.add('hidden');
+            } else {
+                btnRel.className = 'px-3 py-1.5 rounded-lg bg-purple-600/20 text-purple-300 border border-purple-500/30 text-xs font-semibold';
+                btnYt.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white border border-slate-700 text-xs font-semibold';
+                viewRel.classList.remove('hidden');
+                viewYt.classList.add('hidden');
+            }
+        }
+
+        async function loadContentHub() {
+            const loading = document.getElementById('contentLoading');
+            loading.classList.remove('hidden');
+
+            try {
+                const res = await fetch('/api/content/hub');
+                const data = await res.json();
+                loading.classList.add('hidden');
+
+                // Render YouTube Videos
+                const ytContainer = document.getElementById('ytVideosContainer');
+                ytContainer.innerHTML = '';
+                const videos = data.youtube_videos || [];
+                if (videos.length === 0) {
+                    ytContainer.innerHTML = '<div class="col-span-2 p-6 text-center text-xs text-slate-400">Aucune vidéo récente. Suivez des chaînes depuis les réglages.</div>';
+                } else {
+                    videos.forEach(v => {
+                        const card = document.createElement('div');
+                        card.className = 'p-3 rounded-xl bg-slate-800/70 border border-slate-700/60 flex flex-col justify-between space-y-2';
+                        card.innerHTML = `
+                            <div>
+                                <span class="text-[10px] font-semibold text-red-400 block">${v.channel_title || 'YouTube'}</span>
+                                <h6 class="text-xs font-bold text-white line-clamp-2 mt-0.5">${v.title}</h6>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-700/50">
+                                <span>${v.published_at ? new Date(v.published_at).toLocaleDateString() : 'Récent'}</span>
+                                <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="text-red-400 hover:text-red-300 font-semibold flex items-center gap-1">
+                                    <i class="fa-solid fa-play text-[10px]"></i> Visionner
+                                </a>
+                            </div>
+                        `;
+                        ytContainer.appendChild(card);
+                    });
+                }
+
+                // Render Tool Releases
+                const relContainer = document.getElementById('relContainer');
+                relContainer.innerHTML = '';
+                const releases = data.tool_releases || [];
+                if (releases.length === 0) {
+                    relContainer.innerHTML = '<div class="p-6 text-center text-xs text-slate-400">Aucune release récente répertoriée.</div>';
+                } else {
+                    releases.forEach(r => {
+                        const item = document.createElement('div');
+                        item.className = 'p-3 rounded-xl bg-slate-800/70 border border-slate-700/60 flex items-center justify-between';
+                        item.innerHTML = `
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-white">${r.name || r.repo}</span>
+                                    <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px] font-mono">${r.tag || 'vLatest'}</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-1">${r.ai_summary || r.description || ''}</p>
+                            </div>
+                            <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs text-slate-200">
+                                Voir
+                            </a>
+                        `;
+                        relContainer.appendChild(item);
+                    });
+                }
+            } catch (err) {
+                loading.classList.add('hidden');
+                document.getElementById('ytVideosContainer').innerHTML = `<div class="col-span-2 text-xs text-rose-400">Erreur lors de la récupération du hub de contenu.</div>`;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Detect user's device/browser language (e.g. 'fr', 'en', 'es')
+            const detectedLang = (navigator.language || navigator.userLanguage || 'fr').split('-')[0].toLowerCase();
+            currentProfileData.preferred_language = detectedLang;
+
+            // Fetch profile and sync device language
+            fetch('/api/profile/default_user')
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.profile) {
+                        currentProfileData = data.profile;
+                        currentProfileData.entity_watchlist = currentProfileData.entity_watchlist || [];
+                        if (!currentProfileData.preferred_language) {
+                            currentProfileData.preferred_language = detectedLang;
+                        }
+                    }
+                    updateProfileDisplay();
+                })
+                .catch(() => updateProfileDisplay());
+
+            loadStoredAlerts();
+            renderAllStreams();
+            connectSSE();
+        });
+    </script>
+</body>
+</html>

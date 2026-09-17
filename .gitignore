@@ -1,0 +1,52 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Runtime data, databases and generated caches
+data/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.bak
+*.snapshot*
+*.log
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Python environments
+.venv/
+venv/
+env/
+
+# Apple/Xcode and Swift build products
+build/
+DerivedData/
+ios/build_derived_data/
+ios/NewsStreamApp/build/
+ios/NewsStreamApp/build_dd/
+ios/NewsStreamApp/build_generic_ios/
+ios/NewsStreamApp/.build/
+ios/NewsStreamApp/build_device/
+*.xcuserstate
+*.ipa
+*.dSYM/
+
+# Frontend/tooling output
+node_modules/
+dist/
+coverage/
+.DS_Store
+
+# Local Apple workspace/user state
+.swiftpm/
+**/xcuserdata/
+
+# Personal profile data
+config/user_profile.json

@@ -1,0 +1,52 @@
+{
+    "Tech & Science": [
+        "Intelligence Artificielle",
+        "Crypto & Blockchain",
+        "Espace & Astronomie",
+        "Biotech & Santé",
+        "Hardware & Puces",
+        "Startups & VC",
+        "Cybersécurité"
+    ],
+    "Finance & Business": [
+        "Marchés Boursiers (US/EU)",
+        "Immobilier",
+        "Économie Mondiale",
+        "Forex & Commodities",
+        "Entrepreneuriat",
+        "Marketing & Growth"
+    ],
+    "Politique & Monde": [
+        "Géopolitique Globale",
+        "Politique France",
+        "Politique USA",
+        "Conflits & Défense",
+        "Union Européenne",
+        "Afrique & Moyen-Orient",
+        "Asie & Chine"
+    ],
+    "Culture & Divertissement": [
+        "Cinéma & Séries",
+        "Manga & Anime",
+        "Jeux Vidéo & Esport",
+        "Musique & Concerts",
+        "Littérature & BD",
+        "Art & Design"
+    ],
+    "Lifestyle & Sport": [
+        "Football",
+        "Sports de Combat (MMA/Boxe)",
+        "Basket / NBA",
+        "Automobile & F1",
+        "Voyage & Aventure",
+        "Gastronomie",
+        "Mode & Luxe"
+    ],
+    "Société & Environnement": [
+        "Climat & Écologie",
+        "Éducation",
+        "Santé Mentale",
+        "Histoire",
+        "Philosophie"
+    ]
+}

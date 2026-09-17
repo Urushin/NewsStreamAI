@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F6F8FB">
+<meta name="description" content="Votre fil d’actualité personnel. Explorez les sujets, leurs sources et le monde avec MIZAN."><title>MIZAN — Votre fil, votre monde</title>
+<script>try{const t=localStorage.getItem('mizan.theme')||'system',p=localStorage.getItem('mizan.palette')||'standard',f=localStorage.getItem('mizan.font-style')||'modern',d=localStorage.getItem('mizan.density')||'comfortable';document.documentElement.dataset.palette=p;document.documentElement.dataset.fontStyle=f;document.documentElement.dataset.density=d;document.documentElement.dataset.themeSetting=t;if(p==='nightBlue'){document.documentElement.dataset.theme='dark';}else if(t==='system'){document.documentElement.dataset.theme=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}else{document.documentElement.dataset.theme=t;}}catch(e){}</script>
+<link rel="stylesheet" href="/static/mizan.css?v=2.7"><script type="module" src="/static/mizan.js?v=2.7"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Aller au fil</a>
+<div class="app-layout">
+<aside class="sidebar">
+<a class="wordmark" href="#feed" aria-label="MIZAN, accueil"><span class="brand-mark">m<span>•</span></span>MIZAN</a>
+<nav class="primary-nav" aria-label="Navigation principale"></nav>
+<div class="sidebar-bottom">
+<a class="account-button" href="#profile"><span class="avatar" id="account-initial">M</span><span><strong id="account-name">Mon profil</strong></span><span data-icon="chevron"></span></a></div>
+</aside>
+<div class="main-column">
+<header class="topbar"><a class="wordmark mobile-wordmark" href="#feed">MIZAN<span class="brand-dot">•</span></a><span class="eyebrow desktop-date" id="edition-date"></span><div class="topbar-actions"><span class="connection" id="connection" role="status">Connexion…</span><button class="icon-button" data-action="refresh" aria-label="Actualiser les news" title="Actualiser"><span data-icon="refresh"></span></button></div></header>
+<main id="main" tabindex="-1"><div class="page-heading" style="display:none"><div><p class="eyebrow"></p><h1></h1></div></div>
+<form class="searchbar" id="search-form" role="search"><span data-icon="search"></span><input id="search-input" name="q" type="search" placeholder="Un sujet, une source, une idée…" aria-label="Rechercher dans l’actualité" autocomplete="off"><kbd>⌘ K</kbd></form>
+<div id="page-content"><div class="empty-state"><span class="loading-orbit"></span><h2>Vos news se préparent.</h2><p>Nous retrouvons vos sujets et leurs sources.</p></div></div></main>
+</div>
+</div>
+<nav class="mobile-nav" aria-label="Navigation mobile"></nav>
+<button class="new-stories" id="new-stories" data-action="new-stories" hidden><span data-icon="arrow-up"></span><span>De nouvelles informations</span></button>
+<dialog id="sheet" aria-labelledby="sheet-title"><div class="sheet-header"><span class="eyebrow" id="sheet-label">MIZAN</span><button class="icon-button" data-action="close" aria-label="Fermer"><span data-icon="close"></span></button></div><div id="sheet-content"></div></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div><noscript><p>Activez JavaScript pour consulter les news et la carte.</p></noscript>
+</body>
+</html>
